@@ -43,10 +43,12 @@ class Project:
         self.path_to_file: str = None
         self.project_base_path = Path()
         self.source: str = None
-        self.network: Network = None
-        self.about: About = None
         self.logger: logging.Logger = None
-        self.transit: Transit = None
+        self.__transit: Transit = None
+        self.__zoning: Zoning = None
+        self.__network: Network = None
+        self.__matrices: Matrices = None
+        self.__about: About = None
 
     @classmethod
     def from_path(cls, project_folder):
@@ -117,11 +119,8 @@ class Project:
             with self.project.db_connection as conn:
                 conn.commit()
             clean(self)
-            for obj in [self.parameters, self.network]:
-                del obj
-
-            del self.network.link_types
-            del self.network.modes
+            del self.parameters
+            self.__network = self.__transit = self.__zoning = None
 
             global_logger.info(f"Closed project on {self.project_base_path}")
 
@@ -147,10 +146,6 @@ class Project:
     def __load_objects(self):
         matrix_folder = self.project_base_path / "matrices"
         matrix_folder.mkdir(parents=True, exist_ok=True)
-
-        self.network = Network(self)
-        self.about = About(self)
-        self.matrices = Matrices(self)
 
     @property
     def project_parameters(self) -> Parameters:
@@ -188,8 +183,39 @@ class Project:
         raise NotImplementedError
 
     @property
+    def about(self):
+        """Returns the About object for this project"""
+        if self.__about is None:
+            self.__about = About(self)
+        return self.__about
+
+    @property
+    def matrices(self):
+        """Returns the Matrices object for this project"""
+        if self.__matrices is None:
+            self.__matrices = Matrices(self)
+        return self.__matrices
+
+    @property
     def zoning(self):
-        return Zoning(self.network)
+        """Returns the Zoning object for this project"""
+        if self.__zoning is None:
+            self.__zoning = Zoning(self.network)
+        return self.__zoning
+
+    @property
+    def network(self):
+        """Returns the Network object for this project"""
+        if self.__network is None:
+            self.__network = Network(self)
+        return self.__network
+
+    @property
+    def transit(self) -> Transit:
+        """Returns the Transit object for this project"""
+        if self.__transit is None:
+            self.__transit = Transit(self)
+        return self.__transit
 
     def __create_empty_network(self):
         shutil.copyfile(spatialite_database, self.path_to_file)
