@@ -31,7 +31,6 @@ from uuid import uuid4
 from os.path import join
 from tempfile import gettempdir
 
-from aequilibrae.transit import Transit
 from aequilibrae.utils.create_example import create_example
 # sphinx_gallery_thumbnail_path = '../source/_images/transit/hyperpath_bell_n_10_alpha_100d0.png'
 
@@ -43,7 +42,7 @@ project = create_example(fldr, "coquimbo")
 
 # %%
 # Let's create our ``Transit`` object.
-data = Transit(project)
+data = project.transit
 
 # %%
 # Graph building

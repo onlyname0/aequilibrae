@@ -45,10 +45,11 @@ class Project:
         self.path_to_file: str = None
         self.project_base_path = Path()
         self.source: str = None
-        self.network: Network = None
-        self.about: About = None
+        self.__network: Network = None
+        self.__about: About = None
+        self.__transit: Transit = None
+        self.__matrices: Matrices = None
         self.logger: logging.Logger = None
-        self.transit: Transit = None
 
     @classmethod
     def from_path(cls, project_folder):
@@ -119,12 +120,13 @@ class Project:
             with self.project.db_connection as conn:
                 conn.commit()
             clean(self)
-            for obj in [self.parameters, self.network]:
-                del obj
 
-            del self.network.link_types
-            del self.network.modes
-
+            del self.__network.link_types
+            del self.__network.modes
+            self.__network = None
+            self.__parameters = None
+            self.__about = None
+            self.__matrices = None
             global_logger.info(f"Closed project on {self.project_base_path}")
 
         except (sqlite3.ProgrammingError, AttributeError):
@@ -181,10 +183,6 @@ class Project:
         matrix_folder = self.project_base_path / "matrices"
         matrix_folder.mkdir(parents=True, exist_ok=True)
 
-        self.network = Network(self)
-        self.about = About(self)
-        self.matrices = Matrices(self)
-
     @property
     def project_parameters(self) -> Parameters:
         return Parameters(self)
@@ -223,6 +221,39 @@ class Project:
     @property
     def zoning(self):
         return Zoning(self.network)
+
+    @property
+    def about(self):
+        """
+        Load and return the AequilibraE about module for this project.
+        """
+        self.__about = self.__about or About(self)
+        return self.__about
+
+    @property
+    def network(self) -> Network:
+        """
+        Load and return the AequilibraE network module for this project.
+
+        The network module is used to access the network data, including links, nodes, and other related information.
+        """
+        self.__network = self.__network or Network(self)
+        return self.__network
+
+    @property
+    def transit(self) -> Transit:
+        """
+        Load and return the AequilibraE transit module for this project.
+        """
+        self.__transit = self.__transit or Transit(self)
+        return self.__transit
+
+    def matrices(self) -> Matrices:
+        """
+        Load and return the AequilibraE matrices module for this project.
+        """
+        self.__matrices = self.__matrices or Matrices(self)
+        return self.__matrices
 
     def __create_empty_network(self):
         shutil.copyfile(spatialite_database, self.path_to_file)

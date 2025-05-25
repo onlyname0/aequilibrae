@@ -100,7 +100,7 @@ def create_gtfs_project(create_path):
     if os.path.isfile(os.path.join(create_path, "public_transport.sqlite")):
         os.remove(os.path.join(create_path, "public_transport.sqlite"))
 
-    data = Transit(prj)
+    data = prj.transit
 
     yield data
     prj.close()

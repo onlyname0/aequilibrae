@@ -1,7 +1,6 @@
 from os.path import join
 import os
 
-from aequilibrae.transit import Transit
 from aequilibrae.project import Project
 
 import numpy as np
@@ -28,7 +27,7 @@ def run_example(from_model, zones):
 
         print(path)
 
-        data = Transit(project)
+        data = project.transit
 
         graph = data.create_graph(
             with_outer_stop_transfers=False,
@@ -49,7 +48,7 @@ def run_example(from_model, zones):
 
         data.load()
 
-        data = Transit(project)
+        data = project.transit
 
         # pt_con = database_connection("transit")
         # graph_db = TransitGraphBuilder.from_db(pt_con, periods.default_period.period_id)

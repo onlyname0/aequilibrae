@@ -28,7 +28,6 @@ import geopandas as gpd
 import pandas as pd
 
 from aequilibrae.project.database_connection import database_connection
-from aequilibrae.transit import Transit
 from aequilibrae.utils.create_example import create_example
 
 # sphinx_gallery_thumbnail_path = '../source/_images/plot_import_gtfs.png'
@@ -53,7 +52,7 @@ dest_path = join(fldr, "gtfs_coquimbo.zip")
 # Now we create our Transit object and import the GTFS feed into our model.
 # This will automatically create a new public transport database.
 
-data = Transit(project)
+data = project.transit
 
 transit = data.new_gtfs_builder(agency="Lisanco", file_path=dest_path)
 
