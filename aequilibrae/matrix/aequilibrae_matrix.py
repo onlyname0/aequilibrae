@@ -197,7 +197,7 @@ class AequilibraeMatrix(object):
             >>> names_list = ['Car trips', 'pt trips', 'DRT trips', 'bike trips', 'walk trips']
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, 'my_matrix.aem'),
+            >>> mat.create_empty(file_name=Path(my_folder_path) / 'my_matrix.aem',
             ...                  zones=zones_in_the_model,
             ...                  matrix_names=names_list,
             ...                  memory_only=False)
@@ -679,7 +679,7 @@ class AequilibraeMatrix(object):
             >>> index_list = ['tazs', 'census']
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, 'my_matrix.aem'),
+            >>> mat.create_empty(file_name=Path(my_folder_path)/ 'my_matrix.aem',
             ...                  zones=zones_in_the_model,
             ...                  matrix_names=names_list,
             ...                  index_names=index_list )
@@ -749,7 +749,7 @@ class AequilibraeMatrix(object):
         for attr in ("index", "indices", "matrix", "matrices"):
             delattr(self, attr)
 
-    def export(self, output_name: str, cores: List[str] = None):
+    def export(self, output_name: Path, cores: List[str] = None):
         """
         Exports the matrix to other formats, rather than AEM. Formats currently supported: CSV, OMX
 
@@ -771,19 +771,20 @@ class AequilibraeMatrix(object):
             >>> names_list = ['Car trips', 'pt trips', 'DRT trips', 'bike trips', 'walk trips']
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, 'my_matrix.aem'),
+            >>> mat.create_empty(file_name=Path(my_folder_path)/ 'my_matrix.aem',
             ...                  zones=zones_in_the_model,
             ...                  matrix_names=names_list)
 
-            >>> mat.export(os.path.join(my_folder_path, 'my_new_path.aem'), ['Car trips', 'bike trips'])
+            >>> mat.export(Path(my_folder_path)/ 'my_new_path.aem', ['Car trips', 'bike trips'])
 
             >>> mat2 = AequilibraeMatrix()
-            >>> mat2.load(os.path.join(my_folder_path, 'my_new_path.aem'))
+            >>> mat2.load(Path(my_folder_path)/ 'my_new_path.aem')
             >>> mat2.cores
             2
         """
-        fname, file_extension = os.path.splitext(output_name.upper())
+        output_name = Path(output_name)
 
+        file_extension = output_name.suffix.upper()
         if file_extension not in [".AEM", ".CSV", ".OMX"]:
             raise NotImplementedError(f"File extension {file_extension} not implemented yet")
 
@@ -818,12 +819,12 @@ class AequilibraeMatrix(object):
             df = reduce(lambda a, b: a.join(b, how="outer"), dfs)
             df.to_csv(output_name, index=True)
 
-    def load(self, file_path: str):
+    def load(self, file_path: Path):
         """
         Loads matrix from disk. All cores and indices are load. First index is default.
 
         :Arguments:
-            **file_path** (:obj:`str`): Path to AEM or OMX file on disk
+            **file_path** (:obj:`Path`): Path to AEM or OMX file on disk
 
         .. code-block:: python
 
@@ -832,17 +833,18 @@ class AequilibraeMatrix(object):
             >>> project = create_example(project_path)
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.load(os.path.join(project_path, 'matrices/skims.omx'))
+            >>> mat.load(Path(project_path) 'matrices/skims.omx')
             >>> mat.computational_view()
             >>> mat.names
             ['distance_blended', 'time_final']
         """
 
-        self.file_path = file_path
+        self.file_path = Path(file_path)
 
-        if os.path.splitext(file_path)[-1].upper() == ".OMX":
+        file_extension = self.file_path.suffix.upper()
+        if file_extension == ".OMX":
             self.__omx = True
-            self.omx_file = omx.open_file(file_path, "a")
+            self.omx_file = omx.open_file(str(self.file_path), "a")
             self.__load_omx__()
         else:
             self.__load_aem__()
@@ -870,7 +872,7 @@ class AequilibraeMatrix(object):
             >>> names_list = ['Car trips', 'pt trips', 'DRT trips', 'bike trips', 'walk trips']
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, 'my_matrix.aem'),
+            >>> mat.create_empty(file_name=Path(my_folder_path) / 'my_matrix.aem',
             ...                  zones=zones_in_the_model,
             ...                  matrix_names=names_list)
             >>> mat.computational_view(['bike trips', 'walk trips'])
@@ -915,7 +917,7 @@ class AequilibraeMatrix(object):
 
     def copy(
         self,
-        output_name: str = None,
+        output_name: Path = None,
         cores: List[str] = None,
         names: List[str] = None,
         compress: bool = None,
@@ -925,7 +927,7 @@ class AequilibraeMatrix(object):
         Copies a list of cores (or all cores) from one matrix file to another one
 
         :Arguments:
-            **output_name** (:obj:`str`): Name of the new matrix file.
+            **output_name** (:obj:`Path`): Name of the new matrix file.
             If none is provided, returns a copy in memory only
 
             **cores** (:obj:`list`): List of the matrix cores to be copied
@@ -946,18 +948,18 @@ class AequilibraeMatrix(object):
             >>> names_list = ['Car trips', 'pt trips', 'DRT trips', 'bike trips', 'walk trips']
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, 'my_matrix.aem'),
+            >>> mat.create_empty(file_name=Path(my_folder_path) / 'my_matrix.aem',
             ...                  zones=zones_in_the_model,
             ...                  matrix_names=names_list)
 
-            >>> mat.copy(os.path.join(my_folder_path, 'copy_of_my_matrix.aem'),
+            >>> mat.copy(Path(my_folder_path) / 'copy_of_my_matrix.aem',
             ...          cores=['bike trips', 'walk trips'],
             ...          names=['bicycle', 'walking'],
             ...          memory_only=False)  # doctest: +ELLIPSIS
             <aequilibrae.matrix.aequilibrae_matrix.AequilibraeMatrix object at 0x...>
 
             >>> mat2 = AequilibraeMatrix()
-            >>> mat2.load(os.path.join(my_folder_path, 'copy_of_my_matrix.aem'))
+            >>> mat2.load(Path(my_folder_path) / 'copy_of_my_matrix.aem')
             >>> mat2.cores
             2
         """
@@ -977,7 +979,7 @@ class AequilibraeMatrix(object):
 
         output = AequilibraeMatrix()
         output.create_empty(
-            file_name=output_name,
+            file_name=Path(output_name),
             zones=self.zones,
             matrix_names=mnames,
             memory_only=memory_only,
@@ -1016,7 +1018,7 @@ class AequilibraeMatrix(object):
             >>> project = create_example(project_path)
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.load(os.path.join(project_path, 'matrices/skims.omx'))
+            >>> mat.load(Path(project_path)/ 'matrices/skims.omx')
             >>> mat.computational_view(["distance_blended"])
             >>> mat.rows()
             array([357.68202084, 358.68778868, 310.68285491, 275.87964738,
@@ -1045,7 +1047,7 @@ class AequilibraeMatrix(object):
             >>> project = create_example(project_path)
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.load(os.path.join(project_path, 'matrices/skims.omx'))
+            >>> mat.load(Path(project_path) / 'matrices/skims.omx')
             >>> mat.computational_view(["distance_blended"])
             >>> mat.columns()
             array([357.54256811, 357.45109051, 310.88655449, 276.6783439 ,
@@ -1071,7 +1073,7 @@ class AequilibraeMatrix(object):
             >>> index = np.arange(1, 4, dtype=np.int32)
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, "matrices/nan_matrix.aem"),
+            >>> mat.create_empty(file_name=Path(my_folder_path) / "matrices/nan_matrix.aem",
             ...                  zones=3,
             ...                  matrix_names=["only_nan"])
             >>> mat.index[:] = index[:]
@@ -1129,7 +1131,7 @@ class AequilibraeMatrix(object):
             >>> zones_in_the_model = 3317
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, 'my_matrix.aem'),
+            >>> mat.create_empty(file_name=Path(my_folder_path) / 'my_matrix.aem',
             ...                  zones=zones_in_the_model,
             ...                  memory_only=False)
             >>> mat.setName('This is my example')
@@ -1137,7 +1139,7 @@ class AequilibraeMatrix(object):
             >>> mat.close()
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.load(os.path.join(my_folder_path, 'my_matrix.aem'))
+            >>> mat.load(Path(my_folder_path) / 'my_matrix.aem')
             >>> mat.name.decode('utf-8')
             'This is my example'
         """
@@ -1167,7 +1169,7 @@ class AequilibraeMatrix(object):
             >>> zones_in_the_model = 3317
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.create_empty(file_name=os.path.join(my_folder_path, 'my_matrix.aem'),
+            >>> mat.create_empty(file_name=Path(my_folder_path) / 'my_matrix.aem',
             ...                  zones=zones_in_the_model,
             ...                  memory_only=False)
             >>> mat.setDescription('This is a text')
@@ -1175,7 +1177,7 @@ class AequilibraeMatrix(object):
             >>> mat.close()
 
             >>> mat = AequilibraeMatrix()
-            >>> mat.load(os.path.join(my_folder_path, 'my_matrix.aem'))
+            >>> mat.load(Path(my_folder_path) / 'my_matrix.aem')
             >>> mat.description.decode('utf-8')
             'This is a text'
         """
@@ -1198,7 +1200,7 @@ class AequilibraeMatrix(object):
             )[0] = matrix_description
 
     @staticmethod
-    def random_name() -> str:
+    def random_name() -> Path:
         """
         Returns a random name for a matrix with root in the temp directory of the user
 
@@ -1210,4 +1212,4 @@ class AequilibraeMatrix(object):
             >>> mat.random_name() # doctest: +ELLIPSIS
             '/tmp/Aequilibrae_matrix_...'
         """
-        return os.path.join(tempfile.gettempdir(), f"Aequilibrae_matrix_{uuid.uuid4()}.aem")
+        return Path(tempfile.gettempdir()) / f"Aequilibrae_matrix_{uuid.uuid4()}.aem"
