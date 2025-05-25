@@ -253,7 +253,7 @@ cdef void compute_SF_in_parallel(
 
         thread_skim_j_vec = <cnp.float64_t *> calloc(edge_count, sizeof(cnp.float64_t) * n_skim_cols)
 
-        for i in prange(destination_vertex_indices_view.shape[0]):
+        for i in prange(destination_vertex_indices_view.shape[0], schedule="guided"):
             destination_vertex_index = destination_vertex_indices_view[i]
 
             demand_size = 0
